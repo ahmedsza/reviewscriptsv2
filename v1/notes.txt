@@ -1,0 +1,16 @@
+./Get-AppServiceReport.ps1 -AppServiceName appservicename -ResourceGroup rgname -subscription subscriptionid
+
+.\Get-AppServiceReportDiagnostics.ps1 -AppServiceName appservicename -ResourceGroup rgname -subscription subscriptionid
+
+
+.\Get-MySqlFlexibleServerReport.ps1 -ServerName servername -ResourceGroup rgname -subscription subscriptionid
+
+.\Get-PostgresqlFlexibleServerReport.ps1 -ServerName servername -ResourceGroup rgname -subscription subscriptionid
+
+.\Get-MySqlFlexibleServerDatabaseReport.ps1 -ServerName servername -ResourceGroup rgname -DatabaseName databasename -subscription subscriptionid    
+
+
+ az mysql flexible-server execute -n servername  -u dbadmin -p  -f databasename.sql 
+
+
+ .\Get-ResourceGroupReport.ps1 -ResourceGroup rgname -Subscription subscriptionid
