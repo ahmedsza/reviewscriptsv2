@@ -49,17 +49,27 @@ function Invoke-AzCommandJson {
         if ($argument -match '\s') { '"{0}"' -f $argument.Replace('"', '\"') } else { $argument }
     }
     Write-CollectorMessage -Message ('Collecting {0}' -f $Label)
-    $raw = & az @fullArguments 2>&1
-    $exitCode = $LASTEXITCODE
+    $stderrFile = New-TemporaryFile
+    try {
+        $raw = & az @fullArguments 2> $stderrFile
+        $exitCode = $LASTEXITCODE
+        $stderrContent = Get-Content -Path $stderrFile -Raw -ErrorAction SilentlyContinue
+        $stderrText = if ($null -eq $stderrContent) { '' } else { $stderrContent.Trim() }
+    }
+    finally {
+        Remove-Item -Path $stderrFile -Force -ErrorAction SilentlyContinue
+    }
     $rawText = (($raw | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine).Trim()
+    $resultText = if ($exitCode -eq 0 -or $rawText) { $rawText } else { $stderrText }
     $data = $null
-    if ($rawText) {
-        try { $data = $rawText | ConvertFrom-Json -Depth 100 }
-        catch { $data = $rawText }
+    if ($resultText) {
+        try { $data = $resultText | ConvertFrom-Json -Depth 100 }
+        catch { $data = $resultText }
     }
     $success = $exitCode -eq 0
+    $errorText = if ($success) { $null } elseif ($stderrText) { $stderrText } else { $rawText }
     if ($Required -and -not $success) {
-        throw ('Required command failed for {0}: {1}' -f $Label, $rawText)
+        throw ('Required command failed for {0}: {1}' -f $Label, $errorText)
     }
     if ($success) { Write-CollectorMessage -Level 'OK' -Message ('Collected {0}' -f $Label) }
     else { Write-CollectorMessage -Level 'WARN' -Message ('Could not collect {0}' -f $Label) }
@@ -69,7 +79,7 @@ function Invoke-AzCommandJson {
         command = 'az {0}' -f ($quotedArguments -join ' ')
         success = $success
         exitCode = $exitCode
-        error = if ($success) { $null } else { $rawText }
+        error = $errorText
         data = $data
     }
 }
@@ -151,7 +161,7 @@ function Add-StandardResourceEvidence {
     )
     Add-CollectorSection $Document 'diagnosticSettings' (Invoke-AzCommandJson 'monitor.diagnostic-settings.list' @('monitor', 'diagnostic-settings', 'list', '--resource', $ResourceId) $Subscription)
     Add-CollectorSection $Document 'locks' (Invoke-AzCommandJson 'lock.list.resource' @('lock', 'list', '--resource', $ResourceId) $Subscription)
-    Add-CollectorSection $Document 'roleAssignments' (Invoke-AzCommandJson 'role.assignment.list.resource' @('role', 'assignment', 'list', '--scope', $ResourceId, '--all') $Subscription)
+    Add-CollectorSection $Document 'roleAssignments' (Invoke-AzCommandJson 'role.assignment.list.resource' @('role', 'assignment', 'list', '--scope', $ResourceId) $Subscription)
 }
 
 function Save-CollectorDocument {

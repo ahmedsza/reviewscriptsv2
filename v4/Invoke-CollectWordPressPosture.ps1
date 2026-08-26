@@ -26,7 +26,7 @@ $inventory = New-CollectorDocument 'Microsoft.Resources/resourceGroups' $Resourc
 Add-CollectorSection $inventory 'resourceGroup' (Invoke-AzCommandJson 'group.show' @('group', 'show', '--name', $ResourceGroup) $Subscription)
 Add-CollectorSection $inventory 'resources' $resourceResult
 Add-CollectorSection $inventory 'locks' (Invoke-AzCommandJson 'lock.list.resourceGroup' @('lock', 'list', '--resource-group', $ResourceGroup) $Subscription)
-Add-CollectorSection $inventory 'roleAssignments' (Invoke-AzCommandJson 'role.assignment.list.resourceGroup' @('role', 'assignment', 'list', '--resource-group', $ResourceGroup, '--all') $Subscription)
+Add-CollectorSection $inventory 'roleAssignments' (Invoke-AzCommandJson 'role.assignment.list.resourceGroup' @('role', 'assignment', 'list', '--resource-group', $ResourceGroup) $Subscription)
 
 $manifest = [ordered]@{
     metadata = [ordered]@{ schemaVersion = '4.0'; generatedAtUtc = (Get-Date).ToUniversalTime().ToString('o'); resourceGroup = $ResourceGroup; subscription = $Subscription }
