@@ -74,4 +74,11 @@ Invoke-WordPressCollector 'Get-DefenderForCloudData.ps1' @{ ResourceGroup = $Res
 $manifestFile = Join-Path $OutputDirectory 'collection-manifest.json'
 ($manifest | ConvertTo-Json -Depth 100) | Set-Content -Path $manifestFile -Encoding utf8
 Write-CollectorMessage -Level 'OK' -Message ('Collection completed. Manifest: {0}' -f $manifestFile)
-[pscustomobject]@{ outputDirectory = $OutputDirectory; manifest = $manifestFile; discoveredResources = $resources.Count }
+
+$outputDirectoryInfo = Get-Item -LiteralPath $OutputDirectory
+$archiveName = '{0}-{1}-{2}.zip' -f $outputDirectoryInfo.Name, (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfffZ'), ([guid]::NewGuid().ToString('N').Substring(0, 8))
+$archiveFile = Join-Path $outputDirectoryInfo.Parent.FullName $archiveName
+Compress-Archive -LiteralPath $outputDirectoryInfo.FullName -DestinationPath $archiveFile -CompressionLevel Optimal -ErrorAction Stop
+Write-CollectorMessage -Level 'OK' -Message ('Collection archive: {0}' -f $archiveFile)
+
+[pscustomobject]@{ outputDirectory = $outputDirectoryInfo.FullName; manifest = $manifestFile; zipFile = $archiveFile; discoveredResources = $resources.Count }

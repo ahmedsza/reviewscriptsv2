@@ -14,7 +14,7 @@ The collector accepts one resource group, inventories every resource in it, and 
 ## Run
 
 ```powershell
-./Invoke-CollectWordPressPosture.ps1 -ResourceGroup <resource-group-name>
+./Invoke-CollectWordPressPosture.ps1 -ResourceGroup <resource-group-name> -OutputDirectory <output-directory>
 ```
 
 Use a specific subscription or output directory when required:
@@ -29,6 +29,15 @@ Use a specific subscription or output directory when required:
 ## Output
 
 Each resource has its own JSON document. A section records the Azure CLI command, success state, exit code, error, and returned payload. `collection-manifest.json` indexes output files and identifies resources that were inventoried but have no dedicated collector. `resource-group-inventory.json` contains the complete RG inventory, its locks, and resource-group role assignments.
+
+After collection and manifest creation complete, the collector compresses the output directory into a uniquely named ZIP archive beside that directory. The archive name uses the output directory name, a UTC timestamp, and a GUID fragment, for example `wordpress-posture-20260826-120000-20260826T121008636Z-6e1f1f1a.zip`.
+
+The returned object includes `outputDirectory`, `manifest`, `zipFile`, and `discoveredResources`. Capture it to retrieve the archive path:
+
+```powershell
+$result = ./Invoke-CollectWordPressPosture.ps1 -ResourceGroup <resource-group-name>
+$result.zipFile
+```
 
 Sensitive property names and values, including passwords, connection strings, account keys, SAS values, and instrumentation keys, are replaced with `SECRET_FOUND_REDACTED`. The collection intentionally lists Key Vault secret metadata but never reads secret values.
 
