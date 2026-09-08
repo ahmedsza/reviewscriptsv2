@@ -60,6 +60,7 @@ foreach ($resource in $resources) {
         continue
     }
     $parameters = @{ ResourceGroup = $ResourceGroup; OutputDirectory = $OutputDirectory; Subscription = $Subscription; ResourceName = $resource.name; ResourceType = $resource.type }
+    if ($scriptName -in @('Get-AppInsightsData.ps1', 'Get-FrontDoorData.ps1')) { $parameters.ResourceId = [string]$resource.id }
     Invoke-WordPressCollector $scriptName $parameters
 }
 
