@@ -32,7 +32,8 @@ function Invoke-AzCommandJson {
         [Parameter(Mandatory = $true)][string]$Label,
         [Parameter(Mandatory = $true)][string[]]$Arguments,
         [string]$Subscription,
-        [switch]$Required
+        [switch]$Required,
+        [string]$InformationalErrorPattern
     )
 
     $fullArguments = [System.Collections.Generic.List[string]]::new()
@@ -72,6 +73,7 @@ function Invoke-AzCommandJson {
         throw ('Required command failed for {0}: {1}' -f $Label, $errorText)
     }
     if ($success) { Write-CollectorMessage -Level 'OK' -Message ('Collected {0}' -f $Label) }
+    elseif ($InformationalErrorPattern -and $errorText -match $InformationalErrorPattern) { Write-CollectorMessage -Level 'INFO' -Message ('Not applicable or not configured: {0}' -f $Label) }
     else { Write-CollectorMessage -Level 'WARN' -Message ('Could not collect {0}' -f $Label) }
 
     return [pscustomobject]@{
